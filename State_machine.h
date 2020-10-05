@@ -19,6 +19,13 @@ public:
         start = -1;
     }
 
+    state_machine(const state_machine &a) {
+        g = a.g;
+        terminals = a.terminals;
+        n = a.n;
+        start = a.start;
+    }
+
     state_machine& operator=(const state_machine &a) {
         g = a.g;
         terminals = a.terminals;
@@ -190,7 +197,6 @@ std::ostream& operator<<(std::ostream& out, const state_machine& g) {
 }
 
 void dfs_for_equiv(const state_machine &a, const state_machine &b, int* used, int ua, int ub, int len) {
-    std::cout << ua << "->" << a.terminals[ua] << " " << ub << "->" << b.terminals[ub] << std::endl;
     for (int i = 0; i < a.g[ua].size(); i++) {
         int va = a.g[ua][i].first;
         int vb = b.g[ub][i].first;
@@ -216,7 +222,6 @@ bool are_equiv(state_machine a, state_machine b) { //works only for full DKA wit
     for (int ua = 0; ua < a.n; ua++) {
         for (int ub = 0; ub < b.n; ub++) {
             if (used[ua][ub] && a.terminals[ua] != b.terminals[ub]) {
-                std::cout << "used" << ua << " " << ub << std::endl;
                 return false;
             }
         }
