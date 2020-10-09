@@ -1,12 +1,9 @@
-#ifndef Reg_expr_to_state_machine
-#define Reg_expr_to_state_machine
+#include"Reg_expr_to_state_machine.h"
 
-#include"State_machine.h"
-
-void add_number_to_all_edges(state_machine &g, int x) {
+void add_number_to_all_edges(state_machine &g, int inc) {
     for (int u = 0; u < g.n; u++) {
-        for (int i = 0; i < g.g[u].size(); i++) {
-            g.g[u][i].first += x;
+        for (int i = 0; i < g.graph[u].size(); i++) {
+            g.graph[u][i].to += inc;
         }
     }
 }
@@ -16,27 +13,26 @@ state_machine state_machine_with_one_move(std::string move) {
     ans.add_vertex(2);
     ans.start = 0;
     ans.terminals[1] = 1;
-    ans.g[0].push_back(std::make_pair(1, move));
+    ans.add_edge(0, 1, move);
     return ans;
 }
 
 state_machine add_kleene_closure(state_machine a) {
     state_machine ans = a;
-    ans.add_vertex(3);
-    ans.g[ans.n - 3].push_back(std::make_pair(ans.n - 2, ""));
-    ans.g[ans.n - 2].push_back(std::make_pair(ans.n - 1, ""));
-    ans.g[ans.n - 2].push_back(std::make_pair(ans.start, ""));
-    for (int i = 0; i < ans.n; i++) {
-        if (ans.terminals[i]) {
-            ans.g[i].push_back(std::make_pair(ans.n - 2, ""));
+    ans.add_vertex(2);
+    int new_start = ans.n - 2;
+    int new_terminal = ans.n - 1;
+    ans.add_edge(new_start, ans.start, "");
+    ans.add_edge(ans.start, new_terminal, "");
+    for (int u = 0; u < ans.n; u++) {
+        if (ans.terminals[u]) {
+            ans.add_edge(u, ans.start, "");
+            ans.terminals[u] = 0;
         }
     }
 
-    ans.start = ans.n - 3;
-    for (int i = 0; i < ans.n; i++) {
-        ans.terminals[i] = 0;
-    }
-    ans.terminals[ans.n - 1] = 1;
+    ans.start = new_start;
+    ans.terminals[new_terminal] = 1;
     
     return ans;
 }
@@ -45,15 +41,15 @@ state_machine concatenation(state_machine a, state_machine b) {
     int n_last = a.n;
     a.add_vertex(b.n);
     add_number_to_all_edges(b, n_last);
-    for (int i = 0; i < n_last; i++) {
-        if (a.terminals[i]) {
-            a.g[i].push_back(std::make_pair(b.start + n_last, ""));
-            a.terminals[i] = 0;
+    for (int u = 0; u < n_last; u++) {
+        if (a.terminals[u]) {
+            a.add_edge(u, b.start + n_last, "");
+            a.terminals[u] = 0;
         }
     }
-    for (int i = 0; i < b.n; i++) {
-        a.g[n_last + i] = b.g[i];
-        a.terminals[n_last + i] = b.terminals[i];
+    for (int u = 0; u < b.n; u++) {
+        a.graph[n_last + u] = b.graph[u];
+        a.terminals[n_last + u] = b.terminals[u];
     }
     return a;
 }
@@ -62,21 +58,23 @@ state_machine sum(state_machine a, state_machine b) {
 
     int n_last = a.n;
     a.add_vertex(b.n + 2);
+    int new_start = a.n - 2;
+    int new_terminal = a.n - 1;
     add_number_to_all_edges(b, n_last);
-    for (int i = 0; i < b.n; i++) {
-        a.g[n_last + i] = b.g[i];
-        a.terminals[n_last + i] = b.terminals[i];
+    for (int u = 0; u < b.n; u++) {
+        a.graph[n_last + u] = b.graph[u];
+        a.terminals[n_last + u] = b.terminals[u];
     }
-    a.g[a.n - 2].push_back(std::make_pair(a.start, ""));
-    a.g[a.n - 2].push_back(std::make_pair(b.start + n_last, ""));
-    for (int i = 0; i < a.n; i++) {
-        if (a.terminals[i]) {
-            a.g[i].push_back(std::make_pair(a.n - 1, ""));
-            a.terminals[i] = 0;
+    a.add_edge(new_start, a.start, "");
+    a.add_edge(new_start, b.start + n_last, "");
+    for (int u = 0; u < a.n; u++) {
+        if (a.terminals[u]) {
+            a.add_edge(u, new_terminal, "");
+            a.terminals[u] = 0;
         }
     }
-    a.start = a.n - 2;
-    a.terminals[a.n - 1] = 1;
+    a.start = new_start;
+    a.terminals[new_terminal] = 1;
     return a;
 }
 
@@ -128,5 +126,3 @@ state_machine reg_expr_to_state_machine(const std::string &s) {
     int i = 0;
     return expr(s, i);
 }
-
-#endif //Reg_expr_to_state_machine

@@ -1,22 +1,16 @@
-#ifndef Minimization
-#define Minimization
+#include"Minimization.h"
 
-#include"State_machine.h"
-
-bool cmp(std::pair<int, std::string> a,
-         std::pair<int, std::string> b) {
-    return a.second < b.second;
+bool cmp(edge a, edge b) {
+    return a.word < b.word;
 }
 
-state_machine minimization(state_machine g) { //works only for full state machine
+state_machine minimization(state_machine g) {
     std::vector<std::string> alphabet;
     for (int u = 0; u < g.n; u++) {
-        for (int i = 0; i < g.g[u].size(); i++) {
-            std::sort(g.g[u].begin(), g.g[u].end(), cmp);
-        }
+        std::sort(g.graph[u].begin(), g.graph[u].end(), cmp);
     }
-    for (int i = 0; i < g.g[0].size(); i++) {
-        alphabet.push_back(g.g[0][i].second);
+    for (int i = 0; i < g.graph[0].size(); i++) {
+        alphabet.push_back(g.graph[0][i].word);
     }
 
     std::vector<int> colours(g.n);
@@ -27,8 +21,8 @@ state_machine minimization(state_machine g) { //works only for full state machin
     while (true) {
         std::vector<int> new_colours(g.n);
         for (int u = 0; u < g.n; u++) {
-            for (int i = 0; i < g.g[u].size(); i++) {
-                int v = g.g[u][i].first;
+            for (int i = 0; i < g.graph[u].size(); i++) {
+                int v = g.graph[u][i].to;
                 moves_colours[u][i] = colours[v];
             }
         }
@@ -67,10 +61,8 @@ state_machine minimization(state_machine g) { //works only for full state machin
         ans.add_vertex();
         ans.terminals[colours[u]] = g.terminals[u];
         for (int i = 0; i < alphabet.size(); i++) {
-            ans.g[colours[u]].push_back(std::make_pair(colours[g.g[u][i].first], g.g[u][i].second));
+            ans.add_edge(colours[u], colours[g.graph[u][i].to], g.graph[u][i].word);
         }
     }
     return ans;
 }
-
-#endif //Minimization

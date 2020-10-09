@@ -1,8 +1,4 @@
-#ifndef State_machine_to_reg_expr
-#define State_machine_to_reg_expr
-
-#include"State_machine.h"
-#include<algorithm>
+#include"State_machine_to_reg_expr.h"
 
 std::string kleene_closure(std::string s) {
     return "(" + s + ")*";
@@ -30,7 +26,7 @@ std::string state_machine_to_reg_expr(state_machine g) {
     for (int u = 0; u < g.n - 1; u++) {
         if (g.terminals[u]) {
             g.terminals[u] = 0;
-            g.g[u].push_back(std::make_pair(g.n - 1, ""));
+            g.add_edge(u, g.n - 1, "");
         }
     }
     std::vector<int> used_vertex(g.n, 0);
@@ -41,19 +37,19 @@ std::string state_machine_to_reg_expr(state_machine g) {
                 continue;
             }
             int diff_edges_cnt = 0;
-            std::sort(g.g[u].begin(), g.g[u].end());
-            for (int i = 0; i < g.g[u].size();) {
-                std::pair<int, std::string> new_edge(g.g[u][i]);
+            std::sort(g.graph[u].begin(), g.graph[u].end());
+            for (int i = 0; i < g.graph[u].size();) {
+                edge new_edge(g.graph[u][i]);
                 i++;
-                for (; i < g.g[u].size() && g.g[u][i].first == g.g[u][i - 1].first; i++) {
-                    if (used_vertex[g.g[u][i].first]) {
+                for (; i < g.graph[u].size() && g.graph[u][i].to == g.graph[u][i - 1].to; i++) {
+                    if (used_vertex[g.graph[u][i].to]) {
                         continue;
                     }
-                    new_edge.second += "+" + g.g[u][i].second;
+                    new_edge.word += "+" + g.graph[u][i].word;
                 }
-                g.g[u][diff_edges_cnt++] = new_edge;
+                g.graph[u][diff_edges_cnt++] = new_edge;
             }
-            g.g[u].resize(diff_edges_cnt);
+            g.graph[u].resize(diff_edges_cnt);
         }
         int now = -1;
         for (int u = 0; u < g.n; u++) {
@@ -64,36 +60,36 @@ std::string state_machine_to_reg_expr(state_machine g) {
         }
         bool has_loop = false;
         std::string loop = "";
-        std::vector<std::pair<int, std::string> > in, out;
+        std::vector<edge> in, out;
 
         for (int u = 0; u < g.n; u++) {
             if (used_vertex[u]) {
                 continue;
             }
             if (u == now) {
-                for (int i = 0; i < g.g[u].size(); i++) {
-                    int v = g.g[u][i].first;
+                for (int i = 0; i < g.graph[u].size(); i++) {
+                    int v = g.graph[u][i].to;
                     if (used_vertex[v]) {
                         continue;
                     }
-                    std::string s = g.g[u][i].second;
+                    std::string s = g.graph[u][i].word;
                     if (u == v) {
                         has_loop = true;
                         loop = s;
                     } else {
-                        out.push_back(std::make_pair(v, s));
+                        out.push_back(edge(v, s));
                     }
                 }
             } else {
-                for (int i = 0; i < g.g[u].size(); i++) {
-                    int v = g.g[u][i].first;
+                for (int i = 0; i < g.graph[u].size(); i++) {
+                    int v = g.graph[u][i].to;
                     if (used_vertex[v]) {
                         continue;
                     }
-                    std::string s = g.g[u][i].second;
+                    std::string s = g.graph[u][i].word;
                     if (v == now) {
-                        in.push_back(std::make_pair(u, s));
-                        g.g[u].erase(g.g[u].begin() + i);
+                        in.push_back(edge(u, s));
+                        g.graph[u].erase(g.graph[u].begin() + i);
                         i--;
                     }
                 }
@@ -104,10 +100,10 @@ std::string state_machine_to_reg_expr(state_machine g) {
         }
         for (int i = 0; i < in.size(); i++) {
             for (int j = 0; j < out.size(); j++) {
-                std::string s = add_parentheses(in[i].second);
+                std::string s = add_parentheses(in[i].word);
                 s += loop;
-                s += add_parentheses(out[j].second);
-                g.g[in[i].first].push_back(std::make_pair(out[j].first, s));
+                s += add_parentheses(out[j].word);
+                g.add_edge(in[i].to, out[j].to, s);
             }
         }
         used_vertex[now] = 1;
@@ -118,19 +114,19 @@ std::string state_machine_to_reg_expr(state_machine g) {
             continue;
         }
         int diff_edges_cnt = 0;
-        std::sort(g.g[u].begin(), g.g[u].end());
-        for (int i = 0; i < g.g[u].size();) {
-            std::pair<int, std::string> new_edge(g.g[u][i]);
+        std::sort(g.graph[u].begin(), g.graph[u].end());
+        for (int i = 0; i < g.graph[u].size();) {
+            edge new_edge(g.graph[u][i]);
             i++;
-            for (; i < g.g[u].size() && g.g[u][i].first == g.g[u][i - 1].first; i++) {
-                if (used_vertex[g.g[u][i].first]) {
+            for (; i < g.graph[u].size() && g.graph[u][i].to == g.graph[u][i - 1].to; i++) {
+                if (used_vertex[g.graph[u][i].to]) {
                     continue;
                 }
-                new_edge.second += "+" + g.g[u][i].second;
+                new_edge.word += "+" + g.graph[u][i].word;
             }
-            g.g[u][diff_edges_cnt++] = new_edge;
+            g.graph[u][diff_edges_cnt++] = new_edge;
         }
-        g.g[u].resize(diff_edges_cnt);
+        g.graph[u].resize(diff_edges_cnt);
     }
     std::vector<std::pair<bool, std::string> > var(4, std::make_pair(0, ""));
     for (int j = 0; j < 2; j++) {
@@ -140,17 +136,17 @@ std::string state_machine_to_reg_expr(state_machine g) {
         } else {
             u = g.n - 1;
         }
-        for (int i = 0; i < g.g[u].size(); i++) {
-            int v = g.g[u][i].first;
+        for (int i = 0; i < g.graph[u].size(); i++) {
+            int v = g.graph[u][i].to;
             std::pair<int, int> vertexes(u, v);
             if (vertexes == std::make_pair(g.start, g.start)) {
-                var[0] = std::make_pair(1, g.g[u][i].second);
+                var[0] = std::make_pair(1, g.graph[u][i].word);
             } else if (vertexes == std::make_pair(g.start, g.n - 1)) {
-                var[1] = std::make_pair(1, g.g[u][i].second);
+                var[1] = std::make_pair(1, g.graph[u][i].word);
             } else if (vertexes == std::make_pair(g.n - 1, g.start)) {
-                var[2] = std::make_pair(1, g.g[u][i].second);
+                var[2] = std::make_pair(1, g.graph[u][i].word);
             } else if (vertexes == std::make_pair(g.n - 1, g.n - 1)) {
-                var[3] = std::make_pair(1, g.g[u][i].second);
+                var[3] = std::make_pair(1, g.graph[u][i].word);
             }
         }
     }
@@ -173,6 +169,3 @@ std::string state_machine_to_reg_expr(state_machine g) {
     repeating_part = ending + add_parentheses(var[2].second);
     return kleene_closure(repeating_part) + ending;
 }
-
-
-#endif //State_machine_to_reg_expr

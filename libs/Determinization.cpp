@@ -1,10 +1,4 @@
-#ifndef Determinization
-#define Determinization
-
-#include"State_machine.h"
-#include<queue>
-#include<map>
-#include<algorithm>
+#include"Determinization.h"
 
 state_machine determinization(const state_machine &g) {
     std::queue<my_bitset> q;
@@ -20,8 +14,8 @@ state_machine determinization(const state_machine &g) {
 
     std::vector<std::string> alphabet;
     for (int u = 0; u < g.n; u++) {
-        for (int i = 0; i < g.g[u].size(); i++) {
-            alphabet.push_back(g.g[u][i].second);
+        for (int i = 0; i < g.graph[u].size(); i++) {
+            alphabet.push_back(g.graph[u][i].word);
         }
     }
     std::sort(alphabet.begin(), alphabet.end());
@@ -42,9 +36,9 @@ state_machine determinization(const state_machine &g) {
             for (int j = 0; j < alphabet.size(); j++) {
                 if (base_moves[u][j].n == -1) {
                     base_moves[u][j] = my_bitset(g.n);
-                    for (int i = 0; i < g.g[u].size(); i++) {
-                        if (g.g[u][i].second == alphabet[j]) {
-                            base_moves[u][j].set(g.g[u][i].first, 1);
+                    for (int i = 0; i < g.graph[u].size(); i++) {
+                        if (g.graph[u][i].word == alphabet[j]) {
+                            base_moves[u][j].set(g.graph[u][i].to, 1);
                         }
                     }
                 }
@@ -59,11 +53,8 @@ state_machine determinization(const state_machine &g) {
                 ans.add_vertex();
                 q.push(moves[j]);
             }
-            ans.g[names[now]].push_back(std::make_pair(names[moves[j]], alphabet[j]));
+            ans.add_edge(names[now], names[moves[j]], alphabet[j]);
         }
     }
     return ans;
 }
-
-
-#endif //Determinization
