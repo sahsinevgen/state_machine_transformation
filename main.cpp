@@ -9,10 +9,12 @@ int main() {
     // std::cin >> s;
     // state_machine g = reg_expr_to_state_machine(s);
     // std::cout << g << "\n\n";
-    std::cout << make_one_letter_moves(reg_expr_to_state_machine("ab"));
     state_machine a, b;
-    a = determinization(make_one_letter_moves(reg_expr_to_state_machine("ab")));
+    std::string s;
+    std::cin >> s;
+    a = determinization(make_one_letter_moves(reg_expr_to_state_machine(s)));
     std::cout << a;
+    std::cout << minimization(a);
     std::cin >> b;
-    std::cout << are_equiv(a, b) << std::endl;
+    std::cout << (are_equiv(a, b) ? "YES\n" : "NO\n") << std::endl;
 }

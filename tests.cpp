@@ -6,6 +6,7 @@
 #include"libs/Determinization.h"
 #include"libs/Minimization.h"
 #include"libs/State_machine_to_reg_expr.h"
+#include"libs/First_practic.h"
 
 void read_state_machine(std::string file_name, state_machine &g) {
     std::ifstream in(file_name.c_str());
@@ -110,9 +111,17 @@ TEST(State_machine_to_reg_expr_test, kleene_closure) {
     EXPECT_TRUE(are_equiv(g, ans));
 }
 
-TEST(State_machine_to_reg_expr_test, test) {
+TEST(State_machine_to_reg_expr_test, test1) {
     state_machine g, ans;
-    read_state_machine("../tests/State_machine_to_reg_expr_test_1.in", ans);
+    read_state_machine("../tests/State_machine_to_reg_expr_test_2.in", ans);
+    std::string s = state_machine_to_reg_expr(ans);
+    g = determinization(make_one_letter_moves(reg_expr_to_state_machine(s)));
+    EXPECT_TRUE(are_equiv(g, ans));
+}
+
+TEST(State_machine_to_reg_expr_test, test2) {
+    state_machine g, ans;
+    read_state_machine("../tests/State_machine_to_reg_expr_test_3.in", ans);
     std::string s = state_machine_to_reg_expr(ans);
     g = determinization(make_one_letter_moves(reg_expr_to_state_machine(s)));
     EXPECT_TRUE(are_equiv(g, ans));
